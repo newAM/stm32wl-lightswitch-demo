@@ -1,0 +1,48 @@
+[package]
+name = "client"
+version = "0.1.0"
+authors = ["Alex Martens <alexmgit@protonmail.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+defmt = "0.2"
+defmt-rtt = "0.2"
+cortex-m = "0.7"
+cortex-m-rt = "0.6"
+panic-probe = { version = "0.2", features = ["print-defmt" ] }
+
+[dependencies.sha2]
+version = "0.9"
+default-features = false
+
+[dependencies.cortex-m-rtic]
+version = "0.6.0-alpha.5"
+
+[dependencies.lora-e5-bsp]
+git = "https://github.com/newAM/stm32wl-hal.git"
+rev = "4dc8748a879ba7e5398201f66aba4e06ffbd5285"
+features = ["rt", "defmt"]
+
+[dependencies.stm32wl]
+git = "https://github.com/newAM/stm32wl-rs.git"
+rev = "a1aa8eaf9a3d771ccc1752ffff0fa69bf063f009"
+features = ["stm32wle5", "rt"]
+
+[dependencies.shared]
+path = "../shared"
+
+[features]
+# set logging levels here
+default = [
+  "defmt-trace",
+  # "dependency-a/defmt-trace",
+]
+
+# do NOT modify these features
+defmt-default = []
+defmt-trace = []
+defmt-debug = []
+defmt-info = []
+defmt-warn = []
+defmt-error = []

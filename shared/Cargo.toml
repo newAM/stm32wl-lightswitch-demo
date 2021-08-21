@@ -1,0 +1,18 @@
+[package]
+name = "shared"
+version = "0.1.0"
+authors = ["Alex Martens <alexmgit@protonmail.com>"]
+edition = "2018"
+license = "MIT"
+
+[dependencies]
+static_assertions = "^1"
+
+[dependencies.stm32wl-hal]
+git = "https://github.com/newAM/stm32wl-hal.git"
+rev = "4dc8748a879ba7e5398201f66aba4e06ffbd5285"
+features = ["stm32wle5"]
+
+[dependencies.p256-cortex-m4]
+git = "https://github.com/newAM/p256-cortex-m4.git"
+rev = "067eab2243bf44f47b6f7a6625efb110db3309ea"
