@@ -12,6 +12,15 @@ What does it do?  Well, it is a real fancy lightswitch.
 Press D1 on the board flashed with the "client" firmware, it will toggle its own
 LED, then the board with the "server" firmware will toggle its LED.
 
+## Requirements
+
+1. [rustup](https://rustup.rs/)
+2. Two [seeed LoRa-E5 development kits] with probes compatible with [probe-run].
+3. [probe-run] with patches for the STM32WL
+   `cargo install --git https://github.com/newAM/probe-run.git`
+4. `arm-none-eabi-gcc` to assemble the lightening-fast assembly
+   P256 implementation.
+
 ## Usage
 
 Run the `server` package and `client` package on two separate targets at the
@@ -74,3 +83,5 @@ Notes on what needs to be improved to extend this for a real-world application:
 
 [stm32wl-hal]: https://github.com/newAM/stm32wl-hal
 [seeed LoRa-E5 development kits]: https://www.seeedstudio.com/LoRa-E5-Dev-Kit-p-4868.html
+[probe-run]: https://github.com/knurling-rs/probe-run
+[rustup]: https://rustup.rs/
