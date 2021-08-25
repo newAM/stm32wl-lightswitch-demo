@@ -19,9 +19,9 @@ default-features = false
 [dependencies.cortex-m-rtic]
 version = "0.6.0-alpha.5"
 
-[dependencies.lora-e5-bsp]
+[dependencies.nucleo-wl55jc-bsp]
 git = "https://github.com/newAM/stm32wl-hal.git"
-rev = "4dc8748a879ba7e5398201f66aba4e06ffbd5285"
+rev = "ef834cf5e4e15aaafdac48e32b400b5bff038067"
 features = ["rt", "defmt"]
 
 [dependencies.stm32wl]

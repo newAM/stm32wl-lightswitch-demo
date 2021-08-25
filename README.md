@@ -6,16 +6,16 @@ This is a demo project for the [stm32wl-hal].
 still in early development; please file an issue if you would like this demo
 updated.
 
-This runs on two [seeed LoRa-E5 development kits].
+This runs on two [NUCLEO-WL55JC2] boards.
 
 What does it do?  Well, it is a real fancy lightswitch.
-Press D1 on the board flashed with the "client" firmware, it will toggle its own
+Press B3 on the board flashed with the "client" firmware, it will toggle its own
 LED, then the board with the "server" firmware will toggle its LED.
 
 ## Requirements
 
 1. [rustup](https://rustup.rs/)
-2. Two [seeed LoRa-E5 development kits] with probes compatible with [probe-run].
+2. Two [NUCLEO-WL55JC2].
 3. [probe-run] with patches for the STM32WL
    `cargo install --git https://github.com/newAM/probe-run.git`
 4. `arm-none-eabi-gcc` to assemble the lightening-fast assembly
@@ -29,17 +29,17 @@ same time using `probe-run`.
 ```console
 $ probe-run --list-probes
 The following devices were found:
-[0]: STLink V2 (VID: 0483, PID: 3748, Serial: 152A061B2315303030303032, StLink)
-[1]: STLink V2 (VID: 0483, PID: 3748, Serial: 0712041B2115303030303032, StLink)
-$ cargo run -p server -- --probe 152A061B2315303030303032
-$ cargo run -p server -- --probe 0712041B2115303030303032
+[0]: STLink V3 (VID: 0483, PID: 374e, Serial: 001600345553500A20393256, StLink)
+[1]: STLink V3 (VID: 0483, PID: 374e, Serial: 001D00145553500A20393256, StLink)
+$ cargo run -p server -- --probe 001600345553500A20393256
+$ cargo run -p server -- --probe 001D00145553500A20393256
 ```
 
 If you want to be fancy, I use tmux to launch these at the same time in one
 terminal session.
 
 ```bash
-tmux new-session "cargo run -p server -- --probe 152A061B2315303030303032" \; split-window "cargo run -p client -- --probe 0712041B2115303030303032" \; setw remain-on-exit on \;
+tmux new-session "cargo run -p server -- --probe 001600345553500A20393256" \; split-window "cargo run -p client -- --probe 001D00145553500A20393256" \; setw remain-on-exit on \;
 ```
 
 ## Features demonstrated
@@ -82,6 +82,6 @@ Notes on what needs to be improved to extend this for a real-world application:
    and a mechanism to retrieve the panic messages.
 
 [stm32wl-hal]: https://github.com/newAM/stm32wl-hal
-[seeed LoRa-E5 development kits]: https://www.seeedstudio.com/LoRa-E5-Dev-Kit-p-4868.html
+[NUCLEO-WL55JC2]: https://www.st.com/en/evaluation-tools/nucleo-wl55jc.html#sample-buy
 [probe-run]: https://github.com/knurling-rs/probe-run
 [rustup]: https://rustup.rs/

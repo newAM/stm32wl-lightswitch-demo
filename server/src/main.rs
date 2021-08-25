@@ -4,7 +4,7 @@
 use defmt_rtt as _; // global logger
 use panic_probe as _; // panic handler
 
-use lora_e5_bsp::{
+use nucleo_wl55jc_bsp::{
     self as bsp,
     hal::{self, pac},
 };
@@ -15,7 +15,10 @@ defmt::timestamp!("{=u32:µs}", pac::DWT::get_cycle_count() / 48);
 #[rtic::app(device = stm32wl::stm32wle5)]
 mod app {
     use super::{bsp, hal, pac};
-    use bsp::{led::D5, RfSwitch};
+    use bsp::{
+        led::{Led, Red},
+        RfSwitch,
+    };
     use core::convert::TryInto;
     #[allow(unused_imports)]
     use defmt::{assert, assert_eq, unwrap};
@@ -23,7 +26,7 @@ mod app {
         aes::Aes,
         dma::{AllDma, Dma1Ch1, Dma1Ch2},
         embedded_hal::digital::v2::ToggleableOutputPin,
-        gpio::{pins, Output, PortA, PortB},
+        gpio::{pins, Output, PortB, PortC},
         rcc,
         rng::{self, Rng},
         subghz::{CfgIrq, FallbackMode, Irq, Ocp, RegMode, StandbyClk, SubGhz, Timeout},
@@ -49,7 +52,7 @@ mod app {
         rfs: RfSwitch,
         rng: Rng,
         aes: Aes,
-        led: D5,
+        led: Red,
         b3: Output<pins::B3>,
         hasher: Sha256,
         msg: &'static mut Msg,
@@ -71,13 +74,13 @@ mod app {
         dp.RCC.cr.modify(|_, w| w.hsion().set_bit());
         while dp.RCC.cr.read().hsirdy().is_not_ready() {}
 
-        let gpioa: PortA = PortA::split(dp.GPIOA, &mut dp.RCC);
         let gpiob: PortB = PortB::split(dp.GPIOB, &mut dp.RCC);
+        let gpioc: PortC = PortC::split(dp.GPIOC, &mut dp.RCC);
         let mut b3: Output<pins::B3> = Output::default(gpiob.b3);
         b3.toggle().unwrap();
-        let d5: D5 = D5::new(gpiob.b5);
+        let d5: Red = Red::new(gpiob.b11);
 
-        let mut rfs: RfSwitch = RfSwitch::new(gpioa.a4, gpioa.a5);
+        let mut rfs: RfSwitch = RfSwitch::new(gpioc.c3, gpioc.c4, gpioc.c5);
 
         let dma: AllDma = AllDma::split(dp.DMAMUX, dp.DMA1, dp.DMA2, &mut dp.RCC);
         let mut sg: SubGhz<Dma1Ch1, Dma1Ch2> =
@@ -154,6 +157,7 @@ mod app {
 
                     hasher.update(msg.as_serv_nonce().nonce());
                     unwrap!(sg.write_buffer(0, msg.as_buf()));
+                    rfs.set_tx_lp();
                     unwrap!(sg.set_tx(TIMEOUT_100_MILLIS));
                 }
                 x if x == MsgVariant::Data as u8 => {
