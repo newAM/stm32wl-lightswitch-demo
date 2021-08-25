@@ -177,8 +177,8 @@ pub const TIMEOUT_100_MILLIS: Timeout = Timeout::from_duration_sat(Duration::fro
 
 pub const PREAMBLE_LEN: u16 = 256;
 
-pub const RF_FREQ: RfFreq = RfFreq::F915;
-pub const IMG_CAL: CalibrateImage = CalibrateImage::ISM_902_928;
+pub const RF_FREQ: RfFreq = RfFreq::F433;
+pub const IMG_CAL: CalibrateImage = CalibrateImage::ISM_430_440;
 
 pub const SYNC_WORD: [u8; 8] = [0x79, 0x80, 0x0C, 0xC0, 0x29, 0x95, 0xF8, 0x4A];
 pub const SYNC_WORD_LEN: u8 = SYNC_WORD.len() as u8;
@@ -205,14 +205,14 @@ sa::const_assert!(MOD_PARAMS.is_valid(30));
 // configuration for +10 dBm output power
 // see table 35 "PA optimal setting and operating modes"
 pub const PA_CONFIG: PaConfig = PaConfig::new()
-    .set_pa_duty_cycle(0x2)
-    .set_hp_max(0x2)
-    .set_pa(PaSel::Hp);
+    .set_pa_duty_cycle(0x1)
+    .set_hp_max(0x0)
+    .set_pa(PaSel::Lp);
 
 pub const TCXO_MODE: TcxoMode = TcxoMode::new()
     .set_txco_trim(TcxoTrim::Volts1pt7)
     .set_timeout(Timeout::from_duration_sat(Duration::from_millis(10)));
 
 pub const TX_PARAMS: TxParams = TxParams::new()
-    .set_power(0x16)
+    .set_power(0x0D)
     .set_ramp_time(RampTime::Micros40);

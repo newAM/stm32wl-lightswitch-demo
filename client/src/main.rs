@@ -2,7 +2,7 @@
 #![no_main]
 
 use defmt_rtt as _; // global logger
-use lora_e5_bsp::{
+use nucleo_wl55jc_bsp::{
     self as bsp,
     hal::{self, pac},
 };
@@ -17,8 +17,8 @@ mod app {
 
     use super::{bsp, hal, pac};
     use bsp::{
-        led::D5,
-        pb::{PushButton, D0},
+        led::{Led, Red},
+        pb::{Pb3, PushButton},
         RfSwitch,
     };
     use core::convert::TryInto;
@@ -29,7 +29,7 @@ mod app {
         cortex_m::{delay::Delay, peripheral::syst::SystClkSource},
         dma::{AllDma, Dma1Ch1, Dma1Ch2},
         embedded_hal::digital::v2::ToggleableOutputPin,
-        gpio::{pins, Exti, ExtiTrg, Output, PortA, PortB},
+        gpio::{pins, Exti, ExtiTrg, Output, PortB, PortC},
         rcc,
         rng::{self, Rng},
         subghz::{
@@ -66,7 +66,7 @@ mod app {
         state: bool,
         aes: Aes,
         b3: Output<pins::B3>,
-        led: D5,
+        led: Red,
         msg: &'static mut Msg,
     }
 
@@ -85,13 +85,13 @@ mod app {
         cp.DWT.enable_cycle_counter();
         reset_cycle_count(&mut cp.DWT);
 
-        let gpioa: PortA = PortA::split(dp.GPIOA, &mut dp.RCC);
         let gpiob: PortB = PortB::split(dp.GPIOB, &mut dp.RCC);
+        let gpioc: PortC = PortC::split(dp.GPIOC, &mut dp.RCC);
         let mut b3: Output<pins::B3> = Output::default(gpiob.b3);
         b3.toggle().unwrap();
-        let d5: D5 = D5::new(gpiob.b5);
-        let _ = D0::new(gpioa.a0);
-        <D0 as PushButton>::Pin::setup_exti_c1(&mut dp.EXTI, &mut dp.SYSCFG, ExtiTrg::Falling);
+        let d5: Red = Red::new(gpiob.b11);
+        let _ = Pb3::new(gpioc.c6);
+        <Pb3 as PushButton>::Pin::setup_exti_c1(&mut dp.EXTI, &mut dp.SYSCFG, ExtiTrg::Falling);
 
         // enable the HSI16 source clock
         dp.RCC.cr.modify(|_, w| w.hsion().set_bit());
@@ -100,7 +100,7 @@ mod app {
         let adc: Adc = Adc::new(dp.ADC, adc::Clk::RccHsi, &mut dp.RCC);
 
         let delay: Delay = Delay::new(cp.SYST, rcc::cpu1_systick_hz(&dp.RCC, SystClkSource::Core));
-        let rfs: RfSwitch = RfSwitch::new(gpioa.a4, gpioa.a5);
+        let rfs: RfSwitch = RfSwitch::new(gpioc.c3, gpioc.c4, gpioc.c5);
 
         let dma: AllDma = AllDma::split(dp.DMAMUX, dp.DMA1, dp.DMA2, &mut dp.RCC);
         let sg: SubGhz<Dma1Ch1, Dma1Ch2> =
@@ -128,12 +128,12 @@ mod app {
         )
     }
 
-    #[task(binds = EXTI0, shared = [adc, delay, sg, rfs, msg, state, led])]
-    fn d0(mut ctx: d0::Context) {
-        defmt::warn!("D0: No rate limiting or debound, weird things could occur with the ADC");
+    #[task(binds = EXTI9_5, shared = [adc, delay, sg, rfs, msg, state, led])]
+    fn pb3(mut ctx: pb3::Context) {
+        defmt::warn!("Pb3: No rate limiting or debounce, weird things could occur with the ADC");
 
         // clear IRQ
-        <D0 as PushButton>::Pin::clear_exti();
+        <Pb3 as PushButton>::Pin::clear_exti();
 
         ctx.shared.led.lock(|led| led.toggle());
 
@@ -166,7 +166,7 @@ mod app {
                 unwrap!(sg.write_buffer(0, msg.as_buf()));
 
                 unwrap!(sg.set_irq_cfg(&IRQ_CFG));
-                rfs.set_tx_hp();
+                rfs.set_tx_lp();
                 unwrap!(sg.set_tx(TIMEOUT_100_MILLIS));
             });
 
@@ -296,7 +296,7 @@ mod app {
                             }
 
                             unwrap!(sg.write_buffer(0, msg.as_buf()));
-                            rfs.set_tx_hp();
+                            rfs.set_tx_lp();
 
                             unwrap!(sg.set_tx(TIMEOUT_100_MILLIS));
                         }
