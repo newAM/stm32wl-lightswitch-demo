@@ -84,7 +84,7 @@ mod app {
 
         let dma: AllDma = AllDma::split(dp.DMAMUX, dp.DMA1, dp.DMA2, &mut dp.RCC);
         let mut sg: SubGhz<Dma1Ch1, Dma1Ch2> =
-            SubGhz::new_with_dma(dp.SPI3, dma.d1c1, dma.d1c2, &mut dp.RCC);
+            SubGhz::new_with_dma(dp.SPI3, dma.d1.c1, dma.d1.c2, &mut dp.RCC);
 
         let rng: Rng = Rng::new(dp.RNG, rng::Clk::MSI, &mut dp.RCC);
         let aes: Aes = Aes::new(dp.AES, &mut dp.RCC);
