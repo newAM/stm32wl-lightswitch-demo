@@ -10,7 +10,7 @@ static_assertions = "^1"
 
 [dependencies.stm32wl-hal]
 git = "https://github.com/newAM/stm32wl-hal.git"
-rev = "13dc94b9d6ce1f0b706a335fd4d227b747ce5d6a"
+rev = "68805dca1eee7868249d9647e5eaaac763935bdf"
 features = ["stm32wle5"]
 
 [dependencies.p256-cortex-m4]
