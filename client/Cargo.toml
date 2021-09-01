@@ -21,7 +21,7 @@ version = "0.6.0-alpha.5"
 
 [dependencies.nucleo-wl55jc-bsp]
 git = "https://github.com/newAM/stm32wl-hal.git"
-rev = "13dc94b9d6ce1f0b706a335fd4d227b747ce5d6a"
+rev = "68805dca1eee7868249d9647e5eaaac763935bdf"
 features = ["rt", "defmt"]
 
 [dependencies.stm32wl]

@@ -63,7 +63,18 @@ mod app {
     #[init]
     fn init(ctx: init::Context) -> (Shared, Local, init::Monotonics) {
         let mut dp: pac::Peripherals = ctx.device;
-        rcc::set_sysclk_to_msi_48megahertz(&mut dp.FLASH, &mut dp.PWR, &mut dp.RCC);
+        unsafe {
+            rcc::set_sysclk_msi(
+                &mut dp.FLASH,
+                &mut dp.PWR,
+                &mut dp.RCC,
+                rcc::MsiRange::Range48M,
+                // symptom of a version mismatch when using the RTIC alpha
+                // see: https://github.com/rust-embedded/cortex-m/pull/350
+                // replace with `ctx.cs` when cortex-m gets updated
+                &cortex_m::interrupt::CriticalSection::new(),
+            )
+        };
         let mut cp: pac::CorePeripherals = ctx.core;
 
         cp.DCB.enable_trace();
