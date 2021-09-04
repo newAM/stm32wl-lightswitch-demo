@@ -6,22 +6,20 @@ edition = "2018"
 license = "MIT"
 
 [dependencies]
-defmt = "0.2"
-defmt-rtt = "0.2"
+bytemuck = "1"
 cortex-m = "0.7"
 cortex-m-rt = "0.6"
+defmt = "0.2"
+defmt-rtt = "0.2"
+minicbor = "0.11"
 panic-probe = { version = "0.2", features = ["print-defmt" ] }
-
-[dependencies.sha2]
-version = "0.9"
-default-features = false
 
 [dependencies.cortex-m-rtic]
 version = "0.6.0-alpha.5"
 
 [dependencies.nucleo-wl55jc-bsp]
 git = "https://github.com/newAM/stm32wl-hal.git"
-rev = "68805dca1eee7868249d9647e5eaaac763935bdf"
+rev = "7b471e115566c108025076b828a0a8a64d398876"
 features = ["rt", "defmt"]
 
 [dependencies.stm32wl]

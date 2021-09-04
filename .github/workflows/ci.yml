@@ -19,8 +19,4 @@ jobs:
         with:
           toolchain: stable
           target: thumbv7em-none-eabi
-      - name: "install gcc-arm-none-eabi"
-        run: |
-          sudo apt update -y
-          sudo apt install -y gcc-arm-none-eabi
       - run: cargo build
