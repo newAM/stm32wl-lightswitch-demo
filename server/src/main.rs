@@ -19,7 +19,7 @@ mod app {
         led::{Led, Red},
         RfSwitch,
     };
-    use core::convert::TryInto;
+    use core::mem::size_of;
     #[allow(unused_imports)]
     use defmt::{assert, assert_eq, unwrap};
     use hal::{
@@ -29,19 +29,22 @@ mod app {
         gpio::{pins, Output, PortB, PortC},
         rcc,
         rng::{self, Rng},
-        subghz::{CfgIrq, FallbackMode, Irq, Ocp, RegMode, StandbyClk, SubGhz, Timeout},
+        subghz::{
+            CfgIrq, FallbackMode, GenericPacketParams, Irq, Ocp, RegMode, StandbyClk, SubGhz,
+            Timeout,
+        },
         util::reset_cycle_count,
     };
-    use sha2::{Digest, Sha256};
     use shared::{
-        p256_cortex_m4::PublicKey, Msg, MsgVariant, AES_KEY, IMG_CAL, MOD_PARAMS, PACKET_PARAMS,
-        PA_CONFIG, PKT_LEN, PUB_KEY, RF_FREQ, SYNC_WORD, TCXO_MODE, TIMEOUT_100_MILLIS, TX_PARAMS,
+        BASE_PACKET_PARAMS, IMG_CAL, MOD_PARAMS, PA_CONFIG, PRIV_KEY, RF_FREQ, SYNC_WORD,
+        TCXO_MODE, TIMEOUT_100_MILLIS, TX_PARAMS,
     };
 
     const IRQ_CFG: CfgIrq = CfgIrq::new()
         .irq_enable_all(Irq::TxDone)
         .irq_enable_all(Irq::RxDone)
-        .irq_enable_all(Irq::Timeout);
+        .irq_enable_all(Irq::Timeout)
+        .irq_enable_all(Irq::Err);
 
     #[shared]
     struct Shared {}
@@ -53,12 +56,13 @@ mod app {
         rng: Rng,
         aes: Aes,
         led: Red,
+        iv: &'static mut [u32; 3],
         b3: Output<pins::B3>,
-        hasher: Sha256,
-        msg: &'static mut Msg,
+        buf: &'static mut [u8],
     }
 
-    static mut MSG: Msg = Msg::new();
+    static mut IV: [u32; 3] = [0; 3];
+    static mut BUF: [u8; 255] = [0; 255];
 
     #[init]
     fn init(ctx: init::Context) -> (Shared, Local, init::Monotonics) {
@@ -111,7 +115,7 @@ mod app {
         unwrap!(sg.set_tx_params(&TX_PARAMS));
         unwrap!(sg.set_sync_word(&SYNC_WORD));
         unwrap!(sg.set_fsk_mod_params(&MOD_PARAMS));
-        unwrap!(sg.set_packet_params(&PACKET_PARAMS));
+        unwrap!(sg.set_packet_params(&BASE_PACKET_PARAMS));
         unwrap!(sg.calibrate_image(IMG_CAL));
         unwrap!(sg.set_rf_frequency(&RF_FREQ));
         unwrap!(sg.set_irq_cfg(&IRQ_CFG));
@@ -127,74 +131,102 @@ mod app {
                 rfs,
                 b3,
                 led: d5,
-                hasher: Sha256::new(),
-                // safety: RTIC will lock this buffer
-                msg: unsafe { &mut MSG },
+                // safety: RTIC will lock these buffers
+                iv: unsafe { &mut IV },
+                buf: unsafe { &mut BUF },
             },
             init::Monotonics(),
         )
     }
 
-    #[task(binds = RADIO_IRQ_BUSY, local = [sg, rfs, rng, msg, hasher, led, aes, b3])]
+    #[task(binds = RADIO_IRQ_BUSY, local = [sg, rfs, rng, buf, led, aes, b3, iv])]
     fn radio(ctx: radio::Context) {
         let sg = ctx.local.sg;
         let rfs = ctx.local.rfs;
         let rng = ctx.local.rng;
-        let msg = ctx.local.msg;
-        let hasher = ctx.local.hasher;
+        let buf = ctx.local.buf;
         let led = ctx.local.led;
         let aes = ctx.local.aes;
         let b3 = ctx.local.b3;
+        let iv = ctx.local.iv;
 
         b3.toggle().unwrap();
         let (status, irq_status) = unwrap!(sg.irq_status());
 
         if irq_status & Irq::TxDone.mask() != 0 {
-            defmt::trace!("TxDone {}", status);
+            defmt::info!("TxDone {}", status);
             rfs.set_rx();
             unwrap!(sg.set_rx(Timeout::DISABLED));
+            unwrap!(sg.set_packet_params(&BASE_PACKET_PARAMS));
             unwrap!(sg.clear_irq_status(Irq::TxDone.mask()));
         } else if irq_status & Irq::RxDone.mask() != 0 {
-            defmt::trace!("RxDone {}", status);
+            defmt::info!("RxDone {}", status);
             let (_status, len, ptr) = unwrap!(sg.rx_buffer_status());
-            assert_eq!(len, PKT_LEN);
             unwrap!(sg.clear_irq_status(Irq::RxDone.mask()));
-            unwrap!(sg.read_buffer(ptr, msg.as_mut_buf()));
 
-            match msg.variant() {
-                x if x == MsgVariant::ReqNonce as u8 => {
-                    msg.set_variant(MsgVariant::ServNonce);
-                    unwrap!(rng.try_fill_u8(msg.as_serv_nonce().nonce_as_mut()));
+            // message type is determined by length
+            if len == 0 {
+                // 0 bytes, nonce request
+                // reply with 96-bit nonce
+                unwrap!(rng.try_fill_u32(iv.as_mut()));
 
-                    hasher.update(msg.as_serv_nonce().nonce());
-                    unwrap!(sg.write_buffer(0, msg.as_buf()));
-                    rfs.set_tx_lp();
-                    unwrap!(sg.set_tx(TIMEOUT_100_MILLIS));
+                const PACKET_PARAMS: GenericPacketParams =
+                    BASE_PACKET_PARAMS.set_payload_len(size_of::<[u32; 3]>() as u8);
+
+                unwrap!(sg.set_packet_params(&PACKET_PARAMS));
+                unwrap!(sg.write_buffer(0, bytemuck::bytes_of::<[u32; 3]>(iv)));
+                rfs.set_tx_lp();
+                unwrap!(sg.set_tx(TIMEOUT_100_MILLIS));
+            } else if len > 16 {
+                // assume packet is data if it is long enough to have a tag
+                let filled_buf: &mut [u8] = &mut buf[..(len as usize)];
+                unwrap!(sg.read_buffer(ptr, filled_buf));
+
+                // setup for reading the next packet
+                rfs.set_rx();
+                unwrap!(sg.set_rx(Timeout::DISABLED));
+
+                let client_tag_idx: usize = (len - 16) as usize;
+                let encrypted_buf: &mut [u8] = &mut filled_buf[..client_tag_idx];
+                defmt::debug!("decrypting {} byte long buffer", encrypted_buf.len());
+
+                let mut tag: [u32; 4] = [0; 4];
+                unwrap!(aes.decrypt_gcm_inplace(&PRIV_KEY, &iv, &[], encrypted_buf, &mut tag));
+
+                let client_tag: &[u8] = bytemuck::bytes_of::<[u32; 4]>(&tag);
+                let derived_tag: &[u8] = &filled_buf[client_tag_idx..];
+                if client_tag != derived_tag {
+                    defmt::warn!("data is not authentic");
+                    return;
                 }
-                x if x == MsgVariant::Data as u8 => {
-                    rfs.set_rx();
-                    unwrap!(sg.set_rx(Timeout::DISABLED));
 
-                    for chunck in msg.as_encrypt().chunks_mut(4) {
-                        unwrap!(aes.decrypt_ecb_inplace(&AES_KEY, chunck.try_into().unwrap()));
+                led.toggle();
+
+                let mut decoder = minicbor::Decoder::new(filled_buf);
+
+                match decoder.u16() {
+                    Err(_) => {
+                        defmt::warn!("failed to decode vbat");
+                        return;
                     }
+                    Ok(vbat) => defmt::info!("vbat: {}", vbat),
+                };
 
-                    hasher.update(msg.as_data_hashable());
-
-                    let pub_key: PublicKey = unwrap!(PublicKey::from_untagged_bytes(&PUB_KEY).ok());
-
-                    if pub_key
-                        .verify_prehashed(hasher.finalize_reset().as_ref(), &msg.as_data().sig())
-                    {
-                        led.toggle();
-                        defmt::info!("data: {:?}", msg.as_data().data());
-                        defmt::info!("vbat: {:#X}", msg.as_data().vbat());
-                    } else {
-                        defmt::error!("Verify failed");
+                match decoder.str() {
+                    Err(_) => {
+                        defmt::warn!("failed to decode data");
+                        return;
                     }
-                }
-                x => defmt::panic!("Message not handled: {:#X}", x),
+                    Ok(data) => defmt::info!("data: {}", data),
+                };
+            } else {
+                defmt::warn!("Message with unknown length ignored: {}", len);
+                rfs.set_rx();
+                unwrap!(sg.set_rx(Timeout::DISABLED));
             }
+        } else if irq_status & Irq::Err.mask() != 0 {
+            defmt::warn!("Packet error {}", sg.fsk_packet_status());
+            unwrap!(sg.clear_irq_status(Irq::Err.mask()));
         } else {
             defmt::error!("Unhandled IRQ: {:#X} {}", irq_status, status);
             unwrap!(sg.clear_irq_status(irq_status));

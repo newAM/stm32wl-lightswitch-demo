@@ -36,7 +36,3 @@ incremental = false
 lto = false
 opt-level = 3 
 overflow-checks = false
-
-[patch.crates-io.p256-cortex-m4-sys]
-git = "https://github.com/newAM/p256-cortex-m4-sys.git"
-rev = "b49f79c8c4d21cb699efd98a66330ed2b7a4a207"

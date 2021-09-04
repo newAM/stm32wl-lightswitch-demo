@@ -10,9 +10,5 @@ static_assertions = "^1"
 
 [dependencies.stm32wl-hal]
 git = "https://github.com/newAM/stm32wl-hal.git"
-rev = "68805dca1eee7868249d9647e5eaaac763935bdf"
+rev = "7b471e115566c108025076b828a0a8a64d398876"
 features = ["stm32wle5"]
-
-[dependencies.p256-cortex-m4]
-git = "https://github.com/newAM/p256-cortex-m4.git"
-rev = "067eab2243bf44f47b6f7a6625efb110db3309ea"

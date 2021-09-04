@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 
+use core::mem::size_of;
 use defmt_rtt as _; // global logger
 use nucleo_wl55jc_bsp::{
     self as bsp,
@@ -11,17 +12,25 @@ use panic_probe as _; // panic handler
 // WARNING will wrap-around eventually, use this for relative timing only
 defmt::timestamp!("{=u32:µs}", pac::DWT::get_cycle_count() / 48);
 
+// serialize message
+fn msg_ser(
+    buf: &mut [u8],
+    vbat: u16,
+    data: &str,
+) -> Result<usize, minicbor::encode::Error<minicbor::encode::write::EndOfSlice>> {
+    minicbor::Encoder::new(buf).u16(vbat)?.str(data)?;
+    Ok(size_of::<u16>() + data.len() + 2)
+}
+
 #[rtic::app(device = stm32wl::stm32wle5)]
 mod app {
-    use core::sync::atomic::{AtomicU16, Ordering};
-
-    use super::{bsp, hal, pac};
+    use super::{bsp, hal, msg_ser, pac, size_of};
     use bsp::{
         led::{Led, Red},
         pb::{Pb3, PushButton},
         RfSwitch,
     };
-    use core::convert::TryInto;
+    use core::sync::atomic::{AtomicU16, Ordering};
     use defmt::unwrap;
     use hal::{
         adc::{self, Adc},
@@ -31,18 +40,15 @@ mod app {
         embedded_hal::digital::v2::ToggleableOutputPin,
         gpio::{pins, Exti, ExtiTrg, Output, PortB, PortC},
         rcc,
-        rng::{self, Rng},
         subghz::{
             wakeup, CfgIrq, FallbackMode, Irq, Ocp, RegMode, SleepCfg, StandbyClk, Startup,
             StatusMode, SubGhz,
         },
         util::reset_cycle_count,
     };
-    use p256_cortex_m4::{SecretKey, Signature};
-    use sha2::{Digest, Sha256};
     use shared::{
-        p256_cortex_m4, Msg, MsgVariant, AES_KEY, IMG_CAL, MOD_PARAMS, PACKET_PARAMS, PA_CONFIG,
-        PKT_LEN, PRIV_KEY, RF_FREQ, SYNC_WORD, TCXO_MODE, TIMEOUT_100_MILLIS, TX_PARAMS,
+        BASE_PACKET_PARAMS, IMG_CAL, MOD_PARAMS, PA_CONFIG, PRIV_KEY, RF_FREQ, SYNC_WORD,
+        TCXO_MODE, TIMEOUT_100_MILLIS, TX_PARAMS,
     };
 
     const SLEEP_CFG: SleepCfg = SleepCfg::new()
@@ -52,7 +58,8 @@ mod app {
     const IRQ_CFG: CfgIrq = CfgIrq::new()
         .irq_enable_all(Irq::TxDone)
         .irq_enable_all(Irq::RxDone)
-        .irq_enable_all(Irq::Timeout);
+        .irq_enable_all(Irq::Timeout)
+        .irq_enable_all(Irq::Err);
 
     static VBAT: AtomicU16 = AtomicU16::new(0);
 
@@ -62,18 +69,20 @@ mod app {
         delay: Delay,
         sg: SubGhz<Dma1Ch1, Dma1Ch2>,
         rfs: RfSwitch,
-        rng: Rng,
         state: bool,
-        aes: Aes,
         b3: Output<pins::B3>,
         led: Red,
-        msg: &'static mut Msg,
     }
 
     #[local]
-    struct Local {}
+    struct Local {
+        aes: Aes,
+        iv: [u32; 3],
+        buf: [u8; 255],
+    }
 
-    static mut MSG: Msg = Msg::new();
+    static mut IV: [u32; 3] = [0; 3];
+    static mut BUF: [u8; 255] = [0; 255];
 
     #[init]
     fn init(ctx: init::Context) -> (Shared, Local, init::Monotonics) {
@@ -117,7 +126,6 @@ mod app {
         let sg: SubGhz<Dma1Ch1, Dma1Ch2> =
             SubGhz::new_with_dma(dp.SPI3, dma.d1.c1, dma.d1.c2, &mut dp.RCC);
 
-        let rng: Rng = Rng::new(dp.RNG, rng::Clk::MSI, &mut dp.RCC);
         let aes: Aes = Aes::new(dp.AES, &mut dp.RCC);
 
         (
@@ -128,18 +136,19 @@ mod app {
                 sg,
                 b3,
                 rfs,
-                rng,
-                aes,
                 led: d5,
-                // safety: RTIC will lock this buffer
-                msg: unsafe { &mut MSG },
             },
-            Local {},
+            Local {
+                aes,
+                // safety: RTIC will lock these buffers
+                buf: unsafe { BUF },
+                iv: unsafe { IV },
+            },
             init::Monotonics(),
         )
     }
 
-    #[task(binds = EXTI9_5, shared = [adc, delay, sg, rfs, msg, state, led])]
+    #[task(binds = EXTI9_5, shared = [adc, delay, sg, rfs, state, led])]
     fn pb3(mut ctx: pb3::Context) {
         defmt::warn!("Pb3: No rate limiting or debounce, weird things could occur with the ADC");
 
@@ -149,37 +158,27 @@ mod app {
         ctx.shared.led.lock(|led| led.toggle());
 
         // send out a request for nonce
-        (
-            ctx.shared.sg,
-            ctx.shared.rfs,
-            ctx.shared.msg,
-            ctx.shared.state,
-        )
-            .lock(|sg, rfs, msg, state| {
-                *state = true;
-                unsafe { wakeup() };
-                unwrap!(sg.set_standby(StandbyClk::Rc));
-                unwrap!(sg.set_tcxo_mode(&TCXO_MODE));
-                unwrap!(sg.set_standby(StandbyClk::Hse));
-                unwrap!(sg.set_tx_rx_fallback_mode(FallbackMode::StandbyHse));
-                unwrap!(sg.set_regulator_mode(RegMode::Ldo));
-                unwrap!(sg.set_buffer_base_address(0, 0));
-                unwrap!(sg.set_pa_config(&PA_CONFIG));
-                unwrap!(sg.set_pa_ocp(Ocp::Max60m));
-                unwrap!(sg.set_tx_params(&TX_PARAMS));
-                unwrap!(sg.set_sync_word(&SYNC_WORD));
-                unwrap!(sg.set_fsk_mod_params(&MOD_PARAMS));
-                unwrap!(sg.set_packet_params(&PACKET_PARAMS));
-                unwrap!(sg.calibrate_image(IMG_CAL));
-                unwrap!(sg.set_rf_frequency(&RF_FREQ));
-
-                msg.set_variant(MsgVariant::ReqNonce);
-                unwrap!(sg.write_buffer(0, msg.as_buf()));
-
-                unwrap!(sg.set_irq_cfg(&IRQ_CFG));
-                rfs.set_tx_lp();
-                unwrap!(sg.set_tx(TIMEOUT_100_MILLIS));
-            });
+        (ctx.shared.sg, ctx.shared.rfs, ctx.shared.state).lock(|sg, rfs, state| {
+            *state = true;
+            unsafe { wakeup() };
+            unwrap!(sg.set_standby(StandbyClk::Rc));
+            unwrap!(sg.set_tcxo_mode(&TCXO_MODE));
+            unwrap!(sg.set_standby(StandbyClk::Hse));
+            unwrap!(sg.set_tx_rx_fallback_mode(FallbackMode::StandbyHse));
+            unwrap!(sg.set_regulator_mode(RegMode::Ldo));
+            unwrap!(sg.set_buffer_base_address(0, 0));
+            unwrap!(sg.set_pa_config(&PA_CONFIG));
+            unwrap!(sg.set_pa_ocp(Ocp::Max60m));
+            unwrap!(sg.set_tx_params(&TX_PARAMS));
+            unwrap!(sg.set_sync_word(&SYNC_WORD));
+            unwrap!(sg.set_fsk_mod_params(&MOD_PARAMS));
+            unwrap!(sg.set_packet_params(&BASE_PACKET_PARAMS.set_payload_len(0)));
+            unwrap!(sg.calibrate_image(IMG_CAL));
+            unwrap!(sg.set_rf_frequency(&RF_FREQ));
+            unwrap!(sg.set_irq_cfg(&IRQ_CFG));
+            rfs.set_tx_lp();
+            unwrap!(sg.set_tx(TIMEOUT_100_MILLIS));
+        });
 
         // start enabling the ADC to sample vbat
         // this takes less than 1ms, which is why we start the radio first
@@ -249,73 +248,90 @@ mod app {
         }
     }
 
-    #[task(binds = RADIO_IRQ_BUSY, shared = [sg, rfs, msg, rng, state, aes, b3])]
+    #[task(binds = RADIO_IRQ_BUSY, shared = [sg, rfs, state, b3], local=[iv, buf, aes])]
     fn radio(ctx: radio::Context) {
+        let buf = ctx.local.buf;
+        let mut iv = ctx.local.iv;
+        let aes = ctx.local.aes;
+
         (
             ctx.shared.sg,
             ctx.shared.rfs,
-            ctx.shared.msg,
-            ctx.shared.rng,
             ctx.shared.state,
-            ctx.shared.aes,
             ctx.shared.b3,
         )
-            .lock(|sg, rfs, msg, rng, state, aes, b3| {
+            .lock(|sg, rfs, state, b3| {
                 b3.toggle().unwrap();
                 let (status, irq_status) = unwrap!(sg.irq_status());
 
                 if irq_status & Irq::TxDone.mask() != 0 {
-                    defmt::trace!("TxDone {}", status);
+                    defmt::info!("TxDone {}", status);
                     defmt::assert_eq!(status.mode(), Ok(StatusMode::StandbyHse));
                     unwrap!(sg.clear_irq_status(Irq::TxDone.mask()));
 
                     if *state {
                         rfs.set_rx();
                         unwrap!(sg.set_rx(TIMEOUT_100_MILLIS));
+                        // expecting 16B packet in response
+                        unwrap!(sg.set_packet_params(&BASE_PACKET_PARAMS.set_payload_len(16)));
                         *state = false;
                     } else {
                         unwrap!(unsafe { sg.set_sleep(SLEEP_CFG) });
                     }
                 } else if irq_status & Irq::RxDone.mask() != 0 {
-                    defmt::trace!("RxDone {}", status);
+                    defmt::info!("RxDone {}", status);
                     let (_status, len, ptr) = unwrap!(sg.rx_buffer_status());
-                    defmt::assert_eq!(len, PKT_LEN);
                     unwrap!(sg.clear_irq_status(Irq::RxDone.mask()));
-                    unwrap!(sg.read_buffer(ptr, msg.as_mut_buf()));
 
-                    match msg.variant() {
-                        x if x == MsgVariant::ServNonce as u8 => {
-                            let mut hasher: Sha256 = Sha256::new();
-                            hasher.update(msg.as_serv_nonce().nonce());
-                            msg.set_variant(MsgVariant::Data);
-                            msg.as_data().set_vbat(VBAT.load(Ordering::Acquire));
-                            msg.as_data().set_data("Hello, World!");
-                            hasher.update(msg.as_data_hashable());
+                    // 12-bytes -> 96-bits -> nonce reply
+                    if len == 12 {
+                        unwrap!(sg.read_buffer(ptr, bytemuck::bytes_of_mut::<[u32; 3]>(&mut iv)));
 
-                            let secret_key: SecretKey =
-                                unwrap!(SecretKey::from_bytes(&PRIV_KEY).ok());
+                        let end_of_buf: usize =
+                            match msg_ser(buf, VBAT.load(Ordering::Acquire), "Hello, World!") {
+                                Err(_) => {
+                                    defmt::error!("failed to serialize message");
+                                    return;
+                                }
+                                Ok(end_of_buf) => end_of_buf,
+                            };
 
-                            let signature: Signature =
-                                secret_key.sign_prehashed(hasher.finalize().as_ref(), rng);
+                        defmt::debug!("encrypting {} byte long buffer", end_of_buf);
 
-                            msg.as_data().set_sig(&signature);
+                        let mut tag: [u32; 4] = [0; 4];
+                        unwrap!(aes.encrypt_gcm_inplace(
+                            &PRIV_KEY,
+                            &iv,
+                            &[],
+                            &mut buf[..end_of_buf],
+                            &mut tag
+                        ));
 
-                            for chunck in msg.as_encrypt().chunks_mut(4) {
-                                unwrap!(
-                                    aes.encrypt_ecb_inplace(&AES_KEY, chunck.try_into().unwrap())
-                                );
-                            }
+                        let tag_bytes: &[u8] = bytemuck::bytes_of::<[u32; 4]>(&tag);
 
-                            unwrap!(sg.write_buffer(0, msg.as_buf()));
-                            rfs.set_tx_lp();
-
-                            unwrap!(sg.set_tx(TIMEOUT_100_MILLIS));
+                        // append tag to message
+                        for (idx, byte) in tag_bytes.iter().enumerate() {
+                            buf[end_of_buf + idx] = *byte;
                         }
-                        x => defmt::panic!("Message not handled: {:#X}", x),
+                        let end_of_buf: usize = end_of_buf + size_of::<[u32; 4]>();
+
+                        defmt::debug!("TX {} byte packet", end_of_buf);
+
+                        unwrap!(sg.set_packet_params(
+                            &BASE_PACKET_PARAMS.set_payload_len(end_of_buf as u8)
+                        ));
+                        unwrap!(sg.write_buffer(0, &buf[..end_of_buf]));
+                        rfs.set_tx_lp();
+                        unwrap!(sg.set_tx(TIMEOUT_100_MILLIS));
+                    } else {
+                        defmt::warn!("Message with unknown length ignored: {}", len);
                     }
                 } else if irq_status & Irq::Timeout.mask() != 0 {
                     defmt::error!("Why are we timing out? {}", status);
                     unwrap!(sg.clear_irq_status(Irq::Timeout.mask()));
+                } else if irq_status & Irq::Err.mask() != 0 {
+                    defmt::warn!("Packet error {}", sg.fsk_packet_status());
+                    unwrap!(sg.clear_irq_status(Irq::Err.mask()));
                 } else {
                     defmt::error!("Unhandled IRQ: {:#X} {}", irq_status, status);
                     unwrap!(sg.clear_irq_status(irq_status));

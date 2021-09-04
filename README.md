@@ -2,9 +2,8 @@
 
 This is a demo project for the [stm32wl-hal].
 
-**Warning** This is going to be out of date with the latest HAL because it is
-still in early development; please file an issue if you would like this demo
-updated.
+⚠️ This is likely out of date with the latest HAL because the HAL is still in
+early development; please file an issue if you would like this demo updated.
 
 This runs on two [NUCLEO-WL55JC2] boards.
 
@@ -15,11 +14,9 @@ LED, then the board with the "server" firmware will toggle its LED.
 ## Requirements
 
 1. [rustup](https://rustup.rs/)
-2. Two [NUCLEO-WL55JC2].
+2. Two [NUCLEO-WL55JC2]
 3. [probe-run] with patches for the STM32WL
    `cargo install --git https://github.com/newAM/probe-run.git`
-4. `arm-none-eabi-gcc` to assemble the lightening-fast assembly
-   P256 implementation.
 
 ## Usage
 
@@ -44,21 +41,23 @@ tmux new-session "cargo run -p server -- --probe 001600345553500A20393256" \; sp
 
 ## Features demonstrated
 
-* AES encryption/decryption
-* ECDSA signing/verification (without PKA because the hardware PKA is SO SLOW)
+* AES GCM encryption + decryption
 * Random number generation
-* GFSK transmission/reception
+* GFSK TX + RX
 * GPIOs
 * ADC sampling
 
 ## Latency
 
-End-to-end latency is about 75 ms; majority of this is ECDSA processing times.
+End-to-end latency is about 34.1 ms; majority of this is radio wakeup.
 
-1. 29.6 ms client wakeup from sleep, TX nonce request
-2. 5.2 ms server RX nonce request, TX nonce reply
-3. 14.5 ms client RX nonce reply, SHA256 hashing, ECDSA signing, TX data
-4. 25.3 ms server RX data, SHA256 hashing, ECDSA verification
+1. 29.7 ms client wakeup from sleep, TX nonce request
+2. 1.9 ms server RX nonce request, TX nonce reply
+3. 2.5 ms client RX nonce reply, AES GCM encryption, TX data
+4. 0.2 ms server RX data, AES GCM decryption
+
+These numbers do not add up to 34.1ms because the client TX and server RX occur
+concurrently.
 
 ## Security
 
