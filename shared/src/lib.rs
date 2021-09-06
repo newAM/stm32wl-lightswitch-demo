@@ -3,8 +3,8 @@
 use core::time::Duration;
 use stm32wl_hal::subghz::{
     AddrComp, CalibrateImage, CrcType, FskBandwidth, FskBitrate, FskFdev, FskModParams,
-    FskPulseShape, GenericPacketParams, HeaderType, PaConfig, PaSel, PreambleDetection, RampTime,
-    RfFreq, TcxoMode, TcxoTrim, Timeout, TxParams,
+    FskPulseShape, GenericPacketParams, HeaderType, PaConfig, PreambleDetection, RampTime, RfFreq,
+    TcxoMode, TcxoTrim, Timeout, TxParams,
 };
 
 extern crate static_assertions as sa;
@@ -40,19 +40,11 @@ pub const MOD_PARAMS: FskModParams = FskModParams::new()
     .set_bandwidth(FskBandwidth::Bw467)
     .set_fdev(FskFdev::from_hertz(50_000));
 
-sa::const_assert!(MOD_PARAMS.is_valid(30));
+sa::const_assert!(MOD_PARAMS.is_valid_worst_case());
 
-// configuration for +10 dBm output power
-// see table 35 "PA optimal setting and operating modes"
-pub const PA_CONFIG: PaConfig = PaConfig::new()
-    .set_pa_duty_cycle(0x1)
-    .set_hp_max(0x0)
-    .set_pa(PaSel::Lp);
+pub const PA_CONFIG: PaConfig = PaConfig::LP_10;
+pub const TX_PARAMS: TxParams = TxParams::LP_10.set_ramp_time(RampTime::Micros40);
 
 pub const TCXO_MODE: TcxoMode = TcxoMode::new()
     .set_txco_trim(TcxoTrim::Volts1pt7)
     .set_timeout(Timeout::from_duration_sat(Duration::from_millis(10)));
-
-pub const TX_PARAMS: TxParams = TxParams::new()
-    .set_power(0x0D)
-    .set_ramp_time(RampTime::Micros40);

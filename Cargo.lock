@@ -316,7 +316,7 @@ checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 [[package]]
 name = "nucleo-wl55jc-bsp"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/newAM/stm32wl-hal.git?rev=7b471e115566c108025076b828a0a8a64d398876#7b471e115566c108025076b828a0a8a64d398876"
+source = "git+https://github.com/newAM/stm32wl-hal.git?rev=f91e6a5c6f1cfa890a2f3782d6b882c04907a9ea#f91e6a5c6f1cfa890a2f3782d6b882c04907a9ea"
 dependencies = [
  "stm32wl-hal",
 ]
@@ -564,7 +564,7 @@ dependencies = [
 [[package]]
 name = "stm32wl-hal"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/newAM/stm32wl-hal.git?rev=7b471e115566c108025076b828a0a8a64d398876#7b471e115566c108025076b828a0a8a64d398876"
+source = "git+https://github.com/newAM/stm32wl-hal.git?rev=f91e6a5c6f1cfa890a2f3782d6b882c04907a9ea#f91e6a5c6f1cfa890a2f3782d6b882c04907a9ea"
 dependencies = [
  "cfg-if",
  "chrono",
