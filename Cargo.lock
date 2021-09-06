@@ -83,8 +83,6 @@ name = "client"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "cortex-m 0.7.3",
- "cortex-m-rt",
  "cortex-m-rtic",
  "defmt",
  "defmt-rtt",
@@ -517,13 +515,10 @@ name = "server"
 version = "0.1.0"
 dependencies = [
  "bytemuck",
- "cortex-m 0.7.3",
- "cortex-m-rt",
  "cortex-m-rtic",
  "defmt",
  "defmt-rtt",
  "minicbor",
- "nb 1.0.0",
  "nucleo-wl55jc-bsp",
  "panic-probe",
  "shared",

@@ -56,13 +56,8 @@ mod app {
         rng: Rng,
         aes: Aes,
         led: Red,
-        iv: &'static mut [u32; 3],
         b3: Output<pins::B3>,
-        buf: &'static mut [u8],
     }
-
-    static mut IV: [u32; 3] = [0; 3];
-    static mut BUF: [u8; 255] = [0; 255];
 
     #[init]
     fn init(ctx: init::Context) -> (Shared, Local, init::Monotonics) {
@@ -76,7 +71,7 @@ mod app {
                 // symptom of a version mismatch when using the RTIC alpha
                 // see: https://github.com/rust-embedded/cortex-m/pull/350
                 // replace with `ctx.cs` when cortex-m gets updated
-                &cortex_m::interrupt::CriticalSection::new(),
+                &hal::cortex_m::interrupt::CriticalSection::new(),
             )
         };
         let mut cp: pac::CorePeripherals = ctx.core;
@@ -131,15 +126,15 @@ mod app {
                 rfs,
                 b3,
                 led: d5,
-                // safety: RTIC will lock these buffers
-                iv: unsafe { &mut IV },
-                buf: unsafe { &mut BUF },
             },
             init::Monotonics(),
         )
     }
 
-    #[task(binds = RADIO_IRQ_BUSY, local = [sg, rfs, rng, buf, led, aes, b3, iv])]
+    #[task(
+        binds = RADIO_IRQ_BUSY,
+        local = [sg, rfs, rng, led, aes, b3, iv: [u32; 3] = [0; 3], buf: [u8; 255] = [0; 255]]
+    )]
     fn radio(ctx: radio::Context) {
         let sg = ctx.local.sg;
         let rfs = ctx.local.rfs;
