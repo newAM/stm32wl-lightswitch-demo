@@ -151,7 +151,7 @@ fn locked_radio(
     }
 }
 
-#[rtic::app(device = stm32wl::stm32wle5)]
+#[rtic::app(device = stm32wl::stm32wl5x_cm4)]
 mod app {
     use super::*;
 

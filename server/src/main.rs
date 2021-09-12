@@ -12,7 +12,7 @@ use nucleo_wl55jc_bsp::{
 // WARNING will wrap-around eventually, use this for relative timing only
 defmt::timestamp!("{=u32:µs}", pac::DWT::get_cycle_count() / 48);
 
-#[rtic::app(device = stm32wl::stm32wle5)]
+#[rtic::app(device = stm32wl::stm32wl5x_cm4)]
 mod app {
     use super::{bsp, hal, pac};
     use bsp::{
