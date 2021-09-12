@@ -55,7 +55,7 @@ fn msg_ser(
     Ok(size_of::<u16>() + data.len() + 2)
 }
 
-// radio task written outside of to prevent needless indentation
+// radio task written outside of RTIC to prevent needless indentation
 fn locked_radio(
     sg: &mut SubGhz<Dma1Ch1, Dma1Ch2>,
     rfs: &mut RfSwitch,

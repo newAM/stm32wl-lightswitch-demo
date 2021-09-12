@@ -16,7 +16,7 @@ shared = { path = "../shared" }
 
 [dependencies.nucleo-wl55jc-bsp]
 git = "https://github.com/newAM/stm32wl-hal.git"
-rev = "449243030ac3162173229f71dadade722a864d10"
+rev = "2d8617921096f77d4d51340814a35efaae94a990"
 features = ["rt", "defmt"]
 
 [dependencies.stm32wl]
