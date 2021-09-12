@@ -9,7 +9,8 @@ This runs on two [NUCLEO-WL55JC2] boards.
 
 What does it do?  Well, it is a real fancy lightswitch.
 Press B3 on the board flashed with the "client" firmware, it will toggle its own
-LED, then the board with the "server" firmware will toggle its LED.
+LED, then the board with the "server" firmware will toggle its LED after
+authenticating the request.
 
 ## Requirements
 
@@ -55,18 +56,18 @@ End-to-end latency is about 31.3 ms.
 
 ## Security
 
-The usual warnings apply, assume this is full of security bugs.
+The usual warnings apply, assume the code is full of security bugs.
 
-This code is for demonstration purposes only and does not represent best
+The code is for demonstration purposes only and does not represent best
 security practices.
 Implementing a custom protocol is typically a bad idea when security is a
 requirement.
 
-This is **not** secure as-is:
+The code **is not** secure as-is:
 1. The server time is not accurate, leading to nonce reuse.
 2. The time-synchronization nonce is reset when the server is reset,
    leading to nonce reuse.
-3. The private key is comitted to this public repository.
+3. The private key is comitted to a public repository.
 
 ## Limitations
 
