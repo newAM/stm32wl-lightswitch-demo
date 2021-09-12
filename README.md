@@ -41,32 +41,32 @@ tmux new-session "cargo run -p server -- --probe 001600345553500A20393256" \; sp
 
 ## Features demonstrated
 
+* ADC sampling
 * AES GCM encryption + decryption
-* Random number generation
 * GFSK TX + RX
 * GPIOs
-* ADC sampling
+* Random number generation
+* RTC
+* Timers
 
-## Latency
+## Performance
 
-End-to-end latency is about 34.1 ms; majority of this is radio wakeup.
-
-1. 29.7 ms client wakeup from sleep, TX nonce request
-2. 1.9 ms server RX nonce request, TX nonce reply
-3. 2.5 ms client RX nonce reply, AES GCM encryption, TX data
-4. 0.2 ms server RX data, AES GCM decryption
-
-These numbers do not add up to 34.1ms because the client TX and server RX occur
-concurrently.
+End-to-end latency is about 31.3 ms.
 
 ## Security
 
-The usual warnings apply, assume this is insecure and full of bugs.
+The usual warnings apply, assume this is full of security bugs.
 
-I know this is not secure because there is no timeout on the server
-nonce, and this code is therefore vulnerable to a delayed-replay attack.
+This code is for demonstration purposes only and does not represent best
+security practices.
+Implementing a custom protocol is typically a bad idea when security is a
+requirement.
 
-Also the private key is committed into this repo, that is a bad idea.
+This is **not** secure as-is:
+1. The server time is not accurate, leading to nonce reuse.
+2. The time-synchronization nonce is reset when the server is reset,
+   leading to nonce reuse.
+3. The private key is comitted to this public repository.
 
 ## Limitations
 
