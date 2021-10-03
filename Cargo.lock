@@ -371,7 +371,7 @@ checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 [[package]]
 name = "nucleo-wl55jc-bsp"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/newAM/stm32wl-hal.git?rev=2d8617921096f77d4d51340814a35efaae94a990#2d8617921096f77d4d51340814a35efaae94a990"
+source = "git+https://github.com/newAM/stm32wl-hal.git?rev=5aa813c8ba840e4dd78344f32bcec096b9b015d6#5aa813c8ba840e4dd78344f32bcec096b9b015d6"
 dependencies = [
  "stm32wl-hal",
 ]
@@ -657,8 +657,9 @@ checksum = "a2eb9349b6444b326872e140eb1cf5e7c522154d69e7a0ffb0fb81c06b37543f"
 
 [[package]]
 name = "stm32wl"
-version = "0.13.0"
-source = "git+https://github.com/newAM/stm32wl-rs.git?rev=a1aa8eaf9a3d771ccc1752ffff0fa69bf063f009#a1aa8eaf9a3d771ccc1752ffff0fa69bf063f009"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9415cca7284230dc4bb60fa31c39236b03180c50af58644a9877bcad655e8f7"
 dependencies = [
  "bare-metal 1.0.0",
  "cortex-m 0.7.3",
@@ -669,7 +670,7 @@ dependencies = [
 [[package]]
 name = "stm32wl-hal"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/newAM/stm32wl-hal.git?rev=2d8617921096f77d4d51340814a35efaae94a990#2d8617921096f77d4d51340814a35efaae94a990"
+source = "git+https://github.com/newAM/stm32wl-hal.git?rev=5aa813c8ba840e4dd78344f32bcec096b9b015d6#5aa813c8ba840e4dd78344f32bcec096b9b015d6"
 dependencies = [
  "cfg-if",
  "chrono",

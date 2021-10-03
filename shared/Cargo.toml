@@ -10,5 +10,5 @@ static_assertions = "^1"
 
 [dependencies.stm32wl-hal]
 git = "https://github.com/newAM/stm32wl-hal.git"
-rev = "2d8617921096f77d4d51340814a35efaae94a990"
+rev = "5aa813c8ba840e4dd78344f32bcec096b9b015d6"
 features = ["stm32wl5x_cm4"]
