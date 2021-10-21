@@ -2,7 +2,7 @@
 name = "shared"
 version = "0.1.0"
 authors = ["Alex Martens <alexmgit@protonmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 
 [dependencies]
@@ -10,5 +10,5 @@ static_assertions = "^1"
 
 [dependencies.stm32wl-hal]
 git = "https://github.com/newAM/stm32wl-hal.git"
-rev = "5aa813c8ba840e4dd78344f32bcec096b9b015d6"
+rev = "1d62a5f085cc483a4bfc8a2a623d0020b743e19c"
 features = ["stm32wl5x_cm4"]

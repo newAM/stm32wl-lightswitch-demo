@@ -370,7 +370,7 @@ checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 [[package]]
 name = "nucleo-wl55jc-bsp"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/newAM/stm32wl-hal.git?rev=5aa813c8ba840e4dd78344f32bcec096b9b015d6#5aa813c8ba840e4dd78344f32bcec096b9b015d6"
+source = "git+https://github.com/newAM/stm32wl-hal.git?rev=1d62a5f085cc483a4bfc8a2a623d0020b743e19c#1d62a5f085cc483a4bfc8a2a623d0020b743e19c"
 dependencies = [
  "stm32wl-hal",
 ]
@@ -480,18 +480,18 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.29"
+version = "1.0.30"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9f5105d4fdaab20335ca9565e106a5d9b82b6219b5ba735731124ac6711d23d"
+checksum = "edc3358ebc67bc8b7fa0c007f945b0b18226f78437d61bec735a9eb96b61ee70"
 dependencies = [
  "unicode-xid",
 ]
 
 [[package]]
 name = "quote"
-version = "1.0.9"
+version = "1.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3d0b9745dc2debf507c8422de05d7226cc1f0644216dfdfead988f9b1ab32a7"
+checksum = "38bc8cc6a5f2e3655e0899c1b848643b2562f853f114bfec7be120678e3ace05"
 dependencies = [
  "proc-macro2",
 ]
@@ -662,7 +662,7 @@ dependencies = [
 [[package]]
 name = "stm32wl-hal"
 version = "0.1.0-alpha.0"
-source = "git+https://github.com/newAM/stm32wl-hal.git?rev=5aa813c8ba840e4dd78344f32bcec096b9b015d6#5aa813c8ba840e4dd78344f32bcec096b9b015d6"
+source = "git+https://github.com/newAM/stm32wl-hal.git?rev=1d62a5f085cc483a4bfc8a2a623d0020b743e19c#1d62a5f085cc483a4bfc8a2a623d0020b743e19c"
 dependencies = [
  "cfg-if",
  "chrono",
@@ -681,9 +681,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.78"
+version = "1.0.80"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4eac2e6c19f5c3abc0c229bea31ff0b9b091c7b14990e8924b92902a303a0c0"
+checksum = "d010a1623fbd906d51d650a9916aaefc05ffa0e4053ff7fe601167f3e715d194"
 dependencies = [
  "proc-macro2",
  "quote",
