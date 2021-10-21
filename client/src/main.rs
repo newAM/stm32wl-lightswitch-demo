@@ -56,6 +56,7 @@ fn msg_ser(
 }
 
 // radio task written outside of RTIC to prevent needless indentation
+#[allow(clippy::too_many_arguments)]
 fn locked_radio(
     sg: &mut SubGhz<Dma1Ch1, Dma1Ch2>,
     rfs: &mut RfSwitch,
@@ -289,7 +290,7 @@ mod app {
                             );
                             let pkt: [u32; 2] = [devnum, rand_u32];
                             unwrap!(setup_radio_with_payload_len(sg, 8));
-                            unwrap!(sg.write_buffer(0, &bytemuck::bytes_of::<[u32; 2]>(&pkt)));
+                            unwrap!(sg.write_buffer(0, bytemuck::bytes_of::<[u32; 2]>(&pkt)));
                             rfs.set_tx_lp();
                             unwrap!(sg.set_tx(TIMEOUT_100_MILLIS));
                             *time_sync_requested = true;
@@ -315,27 +316,24 @@ mod app {
         // check RTC is setup and we have not exhausted the rate limit
         ctx.shared.rtc.lock(|rtc| match rtc.date_time() {
             Some(date_time) => {
-                let min_date: NaiveDate = NaiveDate::from_ymd(2021, 09, 11);
+                let min_date: NaiveDate = NaiveDate::from_ymd(2021, 9, 11);
                 let min_date_time: NaiveDateTime = min_date.and_hms(0, 0, 0);
                 if date_time < min_date_time {
                     defmt::warn!(
                         "ignoring PB3 IRQ, RTC date is in the past {}",
                         defmt::Display2Format(&date_time)
                     );
-                    return;
                 }
 
                 let timestamp: i64 = date_time.timestamp_millis();
                 if prev.saturating_add(300) > timestamp {
                     defmt::warn!("ignoring PB3 IRQ, rate limited to 300 ms");
-                    return;
                 } else {
                     *prev = timestamp;
                 }
             }
             None => {
                 defmt::warn!("ignoring PB3 IRQ, RTC is not setup");
-                return;
             }
         });
 
@@ -443,7 +441,7 @@ mod app {
 
                 unwrap!(aes.encrypt_gcm_inplace(
                     &PRIV_KEY,
-                    &iv,
+                    iv,
                     &[],
                     &mut remainder[..end_of_buf],
                     tag

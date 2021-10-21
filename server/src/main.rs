@@ -88,7 +88,7 @@ mod app {
 
         // this is a security problem that needs to be fixed
         // the server should have the time set by an up-to-date source.
-        let date: NaiveDate = NaiveDate::from_ymd(2021, 09, 11);
+        let date: NaiveDate = NaiveDate::from_ymd(2021, 9, 11);
         let date_time: NaiveDateTime = date.and_hms(10, 47, 25);
         rtc.set_date_time(date_time);
 
@@ -223,7 +223,7 @@ mod app {
 
                 // decrypt message
                 let mut tag: [u32; 4] = [0; 4];
-                unwrap!(aes.decrypt_gcm_inplace(&PRIV_KEY, &iv, &[], remainder, &mut tag));
+                unwrap!(aes.decrypt_gcm_inplace(&PRIV_KEY, iv, &[], remainder, &mut tag));
 
                 if &tag != rx_tag {
                     defmt::warn!("data is not authentic");
@@ -245,7 +245,6 @@ mod app {
                 match decoder.str() {
                     Err(_) => {
                         defmt::warn!("failed to decode data");
-                        return;
                     }
                     Ok(data) => defmt::info!("data: {}", data),
                 };
