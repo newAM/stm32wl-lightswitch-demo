@@ -1,7 +1,7 @@
 #![no_std]
 
 use core::{mem::size_of, time::Duration};
-use stm32wl_hal::{
+use stm32wlxx_hal::{
     dma::{Dma1Ch1, Dma1Ch2},
     subghz::{
         self, AddrComp, CalibrateImage, CfgIrq, CrcType, FallbackMode, FskBandwidth, FskBitrate,
