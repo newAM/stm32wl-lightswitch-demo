@@ -49,16 +49,18 @@ mod app {
     #[init]
     fn init(ctx: init::Context) -> (Shared, Local, init::Monotonics) {
         let mut dp: pac::Peripherals = ctx.device;
+
+        // symptom of a version mismatch when using the RTIC alpha
+        // see: https://github.com/rust-embedded/cortex-m/pull/350
+        // replace with `ctx.cs` when cortex-m gets updated
+        let cs = unsafe { &hal::cortex_m::interrupt::CriticalSection::new() };
         unsafe {
             rcc::set_sysclk_msi(
                 &mut dp.FLASH,
                 &mut dp.PWR,
                 &mut dp.RCC,
                 rcc::MsiRange::Range48M,
-                // symptom of a version mismatch when using the RTIC alpha
-                // see: https://github.com/rust-embedded/cortex-m/pull/350
-                // replace with `ctx.cs` when cortex-m gets updated
-                &hal::cortex_m::interrupt::CriticalSection::new(),
+                cs,
             )
         };
         let mut cp: pac::CorePeripherals = ctx.core;
@@ -69,9 +71,9 @@ mod app {
 
         let gpiob: PortB = PortB::split(dp.GPIOB, &mut dp.RCC);
         let gpioc: PortC = PortC::split(dp.GPIOC, &mut dp.RCC);
-        let d5: Red = Red::new(gpiob.b11);
+        let d5: Red = Red::new(gpiob.b11, cs);
 
-        let mut rfs: RfSwitch = RfSwitch::new(gpioc.c3, gpioc.c4, gpioc.c5);
+        let mut rfs: RfSwitch = RfSwitch::new(gpioc.c3, gpioc.c4, gpioc.c5, cs);
 
         let dma: AllDma = AllDma::split(dp.DMAMUX, dp.DMA1, dp.DMA2, &mut dp.RCC);
         let mut sg: SubGhz<Dma1Ch1, Dma1Ch2> =

@@ -369,10 +369,10 @@ checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 
 [[package]]
 name = "nucleo-wl55jc-bsp"
-version = "0.1.0-alpha.0"
-source = "git+https://github.com/newAM/stm32wl-hal.git?rev=1d62a5f085cc483a4bfc8a2a623d0020b743e19c#1d62a5f085cc483a4bfc8a2a623d0020b743e19c"
+version = "0.2.0"
+source = "git+https://github.com/stm32-rs/stm32wlxx-hal.git?rev=452f674e355fc025c63cd5dcd7f451cdefced69d#452f674e355fc025c63cd5dcd7f451cdefced69d"
 dependencies = [
- "stm32wl-hal",
+ "stm32wlxx-hal",
 ]
 
 [[package]]
@@ -623,7 +623,7 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "static_assertions",
- "stm32wl-hal",
+ "stm32wlxx-hal",
 ]
 
 [[package]]
@@ -660,9 +660,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "stm32wl-hal"
-version = "0.1.0-alpha.0"
-source = "git+https://github.com/newAM/stm32wl-hal.git?rev=1d62a5f085cc483a4bfc8a2a623d0020b743e19c#1d62a5f085cc483a4bfc8a2a623d0020b743e19c"
+name = "stm32wlxx-hal"
+version = "0.2.0"
+source = "git+https://github.com/stm32-rs/stm32wlxx-hal.git?rev=452f674e355fc025c63cd5dcd7f451cdefced69d#452f674e355fc025c63cd5dcd7f451cdefced69d"
 dependencies = [
  "cfg-if",
  "chrono",
