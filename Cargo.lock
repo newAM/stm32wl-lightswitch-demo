@@ -250,9 +250,9 @@ checksum = "ab5ef0d4909ef3724cc8cce6ccc8572c5c817592e9285f5464f8e86f8bd3726e"
 
 [[package]]
 name = "heapless"
-version = "0.7.7"
+version = "0.7.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe65ef062f1af5b1b189842b0bc45bd671c38e1d22c6aa22e6ada03d01026d53"
+checksum = "9c1ad878e07405df82b695089e63d278244344f80e764074d0bdfe99b89460f3"
 dependencies = [
  "atomic-polyfill",
  "hash32",
@@ -315,7 +315,8 @@ checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 [[package]]
 name = "nucleo-wl55jc-bsp"
 version = "0.2.0"
-source = "git+https://github.com/stm32-rs/stm32wlxx-hal.git?rev=0d6d597a0f28bb338cf8098b228ee43812a7efca#0d6d597a0f28bb338cf8098b228ee43812a7efca"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a4d03031dad311dceb2937521b533f3344fbca7ab6aa576e36d28ab7395de26"
 dependencies = [
  "stm32wlxx-hal",
 ]
@@ -598,7 +599,8 @@ dependencies = [
 [[package]]
 name = "stm32wlxx-hal"
 version = "0.2.0"
-source = "git+https://github.com/stm32-rs/stm32wlxx-hal.git?rev=0d6d597a0f28bb338cf8098b228ee43812a7efca#0d6d597a0f28bb338cf8098b228ee43812a7efca"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e45bbef51609bf7fc6afb811d3eb4881e188e01316387a6ef68f22db345460fb"
 dependencies = [
  "cfg-if",
  "chrono",

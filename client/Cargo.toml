@@ -16,6 +16,5 @@ shared = { path = "../shared" }
 stm32wl = { version = "0.14", features = ["stm32wl5x_cm4", "rt"] }
 
 [dependencies.nucleo-wl55jc-bsp]
-git = "https://github.com/stm32-rs/stm32wlxx-hal.git"
-rev = "0d6d597a0f28bb338cf8098b228ee43812a7efca"
+version = "0.2"
 features = ["stm32wl5x_cm4", "rt", "defmt"]
