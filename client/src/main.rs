@@ -43,7 +43,7 @@ const SLEEP_CFG: SleepCfg = SleepCfg::new()
     .set_rtc_wakeup_en(false);
 
 // WARNING will wrap-around eventually, use this for relative timing only
-defmt::timestamp!("{=u32:µs}", pac::DWT::get_cycle_count() / 48);
+defmt::timestamp!("{=u32:us}", pac::DWT::get_cycle_count() / 48);
 
 // serialize message
 fn msg_ser(
