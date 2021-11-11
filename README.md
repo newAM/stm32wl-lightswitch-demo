@@ -2,9 +2,6 @@
 
 This is a demo project for the [stm32wl-hal].
 
-⚠️ This is likely out of date with the latest HAL because the HAL is still in
-early development; please file an issue if you would like this demo updated.
-
 This runs on two [NUCLEO-WL55JC2] boards.
 
 What does it do?  Well, it is a real fancy lightswitch.
