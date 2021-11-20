@@ -20,7 +20,7 @@ use hal::{
     dma::{AllDma, Dma1Ch1, Dma1Ch2},
     embedded_hal::digital::v2::ToggleableOutputPin,
     embedded_hal::timer::CountDown,
-    gpio::{pins, Exti, ExtiTrg, Output, PortB, PortC},
+    gpio::{pins, Exti, ExtiTrg, Output, PortA, PortB, PortC, RfBusy},
     info,
     lptim::{self, LpTim, LpTim1},
     rcc,
@@ -204,6 +204,7 @@ mod app {
             .bdcr
             .modify(|_, w| w.lseon().on().lsesysen().enabled());
 
+        let gpioa: PortA = PortA::split(dp.GPIOA, &mut dp.RCC);
         let gpiob: PortB = PortB::split(dp.GPIOB, &mut dp.RCC);
         let gpioc: PortC = PortC::split(dp.GPIOC, &mut dp.RCC);
         let mut b3: Output<pins::B3> = Output::default(gpiob.b3, cs);
@@ -223,6 +224,9 @@ mod app {
         let dma: AllDma = AllDma::split(dp.DMAMUX, dp.DMA1, dp.DMA2, &mut dp.RCC);
         let sg: SubGhz<Dma1Ch1, Dma1Ch2> =
             SubGhz::new_with_dma(dp.SPI3, dma.d1.c1, dma.d1.c2, &mut dp.RCC);
+
+        // output the RFBUSY signal on pin A12 for debug
+        RfBusy::new(gpioa.a12, cs);
 
         // wait for LSE to be ready
         while dp.RCC.bdcr.read().lserdy().is_not_ready() {}
