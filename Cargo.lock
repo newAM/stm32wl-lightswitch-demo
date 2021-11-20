@@ -314,9 +314,9 @@ checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 
 [[package]]
 name = "nucleo-wl55jc-bsp"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2a4d03031dad311dceb2937521b533f3344fbca7ab6aa576e36d28ab7395de26"
+checksum = "084345335ee64511239b2d3b29f0c4c0b5749cb0f192c9f2b2a5d5f8b143a03d"
 dependencies = [
  "stm32wlxx-hal",
 ]
@@ -598,9 +598,9 @@ dependencies = [
 
 [[package]]
 name = "stm32wlxx-hal"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e45bbef51609bf7fc6afb811d3eb4881e188e01316387a6ef68f22db345460fb"
+checksum = "d6f2f3a87c6b994cb83f1672ec7df63257606e4a09401c3789b592a3c22fbf70"
 dependencies = [
  "cfg-if",
  "chrono",
