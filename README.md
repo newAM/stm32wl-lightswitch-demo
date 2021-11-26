@@ -27,7 +27,7 @@ The following devices were found:
 [0]: STLink V3 (VID: 0483, PID: 374e, Serial: 001600345553500A20393256, StLink)
 [1]: STLink V3 (VID: 0483, PID: 374e, Serial: 001D00145553500A20393256, StLink)
 $ DEFMT_LOG=trace cargo run -p server -- --probe 001600345553500A20393256
-$ DEFMT_LOG=trace cargo run -p server -- --probe 001D00145553500A20393256
+$ DEFMT_LOG=trace cargo run -p client -- --probe 001D00145553500A20393256
 ```
 
 If you want to be fancy, I use tmux to launch these at the same time in one
