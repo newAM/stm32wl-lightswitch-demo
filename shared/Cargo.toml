@@ -9,5 +9,5 @@ license = "MIT"
 static_assertions = "1"
 
 [dependencies.stm32wlxx-hal]
-version = "0.2"
+version = "0.3"
 features = ["stm32wl5x_cm4"]
