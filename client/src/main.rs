@@ -98,7 +98,7 @@ fn locked_radio(
 
         // 28-bytes -> time sync reply
         if len == (IV_AND_TAG_LEN as u8) {
-            let iv: [u32; 3] = [info::uid64_devnum(), *time_sync_nonce, buf[0]];
+            let iv: [u32; 3] = [info::Uid64::read_devnum(), *time_sync_nonce, buf[0]];
 
             let (aad, remainder): (&mut [u32], &mut [u32]) = buf.split_at_mut(1);
             let (data, remainder): (&mut [u32], &mut [u32]) = remainder.split_at_mut(2);
@@ -289,7 +289,7 @@ mod app {
                     match rng.try_u32() {
                         Ok(rand_u32) => {
                             *time_sync_nonce = rand_u32;
-                            let devnum: u32 = info::uid64_devnum();
+                            let devnum: u32 = info::Uid64::read_devnum();
                             defmt::info!(
                                 "requesting time from server with devnum 0x{:08X} and nonce 0x{:08X}",
                                 devnum, rand_u32
