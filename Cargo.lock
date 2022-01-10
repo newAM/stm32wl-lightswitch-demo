@@ -309,7 +309,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d4192827313a83e7547fec78003580d2c33a7ca2275950dab7a0e08baa90869b"
 dependencies = [
  "defmt",
- "stm32wlxx-hal",
+ "stm32wlxx-hal 0.3.0",
 ]
 
 [[package]]
@@ -506,7 +506,7 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "static_assertions",
- "stm32wlxx-hal",
+ "stm32wlxx-hal 0.4.0",
 ]
 
 [[package]]
@@ -553,6 +553,24 @@ dependencies = [
  "cortex-m",
  "cortex-m-rt",
  "defmt",
+ "embedded-hal",
+ "nb 1.0.0",
+ "num-integer",
+ "num-traits",
+ "paste",
+ "rand_core",
+ "stm32wl",
+ "void",
+]
+
+[[package]]
+name = "stm32wlxx-hal"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcec4fe08dde9c51bf779159543914955c91d07d50feba2946a57d21b8d96a16"
+dependencies = [
+ "cfg-if",
+ "cortex-m",
  "embedded-hal",
  "nb 1.0.0",
  "num-integer",
