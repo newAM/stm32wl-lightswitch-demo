@@ -304,12 +304,12 @@ checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 
 [[package]]
 name = "nucleo-wl55jc-bsp"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d4192827313a83e7547fec78003580d2c33a7ca2275950dab7a0e08baa90869b"
+checksum = "a57b7e7509fb36d2a783cda033754c244e3878f926952464f91072f8da321cf7"
 dependencies = [
  "defmt",
- "stm32wlxx-hal",
+ "stm32wlxx-hal 0.4.0",
 ]
 
 [[package]]
@@ -506,7 +506,7 @@ name = "shared"
 version = "0.1.0"
 dependencies = [
  "static_assertions",
- "stm32wlxx-hal",
+ "stm32wlxx-hal 0.3.0",
 ]
 
 [[package]]
@@ -547,6 +547,24 @@ name = "stm32wlxx-hal"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "17e3bb0406d4785ec86df209075c49e7007ae4c00d5f93c8e6d01c6ec34d7344"
+dependencies = [
+ "cfg-if",
+ "cortex-m",
+ "embedded-hal",
+ "nb 1.0.0",
+ "num-integer",
+ "num-traits",
+ "paste",
+ "rand_core",
+ "stm32wl",
+ "void",
+]
+
+[[package]]
+name = "stm32wlxx-hal"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fcec4fe08dde9c51bf779159543914955c91d07d50feba2946a57d21b8d96a16"
 dependencies = [
  "cfg-if",
  "chrono",

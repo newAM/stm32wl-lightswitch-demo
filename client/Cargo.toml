@@ -15,5 +15,5 @@ panic-probe = { version = "0.3", features = ["print-defmt" ] }
 shared.path = "../shared"
 
 [dependencies.nucleo-wl55jc-bsp]
-version = "0.3"
+version = "0.4"
 features = ["stm32wl5x_cm4", "rt", "defmt", "chrono"]
