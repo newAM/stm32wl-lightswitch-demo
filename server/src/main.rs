@@ -10,7 +10,7 @@ use nucleo_wl55jc_bsp::{
 };
 
 // WARNING will wrap-around eventually, use this for relative timing only
-defmt::timestamp!("{=u32:us}", pac::DWT::get_cycle_count() / 48);
+defmt::timestamp!("{=u32:us}", pac::DWT::cycle_count() / 48);
 
 #[rtic::app(device = nucleo_wl55jc_bsp::hal::pac)]
 mod app {
@@ -30,7 +30,6 @@ mod app {
         rcc,
         rtc::{self, Rtc},
         subghz::{GenericPacketParams, Irq, SubGhz, Timeout},
-        util::reset_cycle_count,
     };
     use shared::{setup_radio, BASE_PACKET_PARAMS, IV_AND_TAG_LEN, PRIV_KEY, TIMEOUT_100_MILLIS};
 
@@ -67,7 +66,7 @@ mod app {
 
         cp.DCB.enable_trace();
         cp.DWT.enable_cycle_counter();
-        reset_cycle_count(&mut cp.DWT);
+        cp.DWT.set_cycle_count(0);
 
         let gpiob: PortB = PortB::split(dp.GPIOB, &mut dp.RCC);
         let gpioc: PortC = PortC::split(dp.GPIOC, &mut dp.RCC);

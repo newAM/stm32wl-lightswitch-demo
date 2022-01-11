@@ -27,7 +27,6 @@ use hal::{
     rng::{self, Rng},
     rtc::{self, Rtc},
     subghz::{Irq, SleepCfg, Startup, StatusMode, SubGhz},
-    util::reset_cycle_count,
 };
 use nucleo_wl55jc_bsp::{
     self as bsp,
@@ -43,7 +42,7 @@ const SLEEP_CFG: SleepCfg = SleepCfg::new()
     .set_rtc_wakeup_en(false);
 
 // WARNING will wrap-around eventually, use this for relative timing only
-defmt::timestamp!("{=u32:us}", pac::DWT::get_cycle_count() / 48);
+defmt::timestamp!("{=u32:us}", pac::DWT::cycle_count() / 48);
 
 // serialize message
 fn msg_ser(
@@ -195,7 +194,7 @@ mod app {
 
         cp.DCB.enable_trace();
         cp.DWT.enable_cycle_counter();
-        reset_cycle_count(&mut cp.DWT);
+        cp.DWT.set_cycle_count(0);
 
         // start enabling the LSE clock before we need it
         unsafe { rcc::pulse_reset_backup_domain(&mut dp.RCC, &mut dp.PWR) };
