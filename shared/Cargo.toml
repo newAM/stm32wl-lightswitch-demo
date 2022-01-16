@@ -8,6 +8,11 @@ license = "MIT"
 [dependencies]
 static_assertions = "1"
 
+[dependencies.serde]
+version = "1"
+default-features = false
+features = ["derive"]
+
 [dependencies.nucleo-wl55jc-bsp]
 version = "0.4"
 features = ["stm32wl5x_cm4", "rt", "defmt", "chrono"]

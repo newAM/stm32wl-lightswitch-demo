@@ -44,16 +44,6 @@ const SLEEP_CFG: SleepCfg = SleepCfg::new()
 // WARNING will wrap-around eventually, use this for relative timing only
 defmt::timestamp!("{=u32:us}", pac::DWT::cycle_count() / 48);
 
-// serialize message
-fn msg_ser(
-    buf: &mut [u8],
-    vbat: u16,
-    data: &str,
-) -> Result<usize, minicbor::encode::Error<minicbor::encode::write::EndOfSlice>> {
-    minicbor::Encoder::new(buf).u16(vbat)?.str(data)?;
-    Ok(size_of::<u16>() + data.len() + 2)
-}
-
 // radio task written outside of RTIC to prevent needless indentation
 #[allow(clippy::too_many_arguments)]
 fn locked_radio(
@@ -428,15 +418,18 @@ mod app {
                 let remainder: &mut [u32; 57] = unwrap!(remainder.try_into().ok());
                 let remainder: &mut [u8] = unsafe { core::mem::transmute::<&mut [u32; 57], &mut [u8; 57 * 4]>(remainder) };
 
-                // construct the message
-                let end_of_buf: usize =
-                    match msg_ser(remainder, vbat, "Hello, World!") {
-                        Err(_) => {
-                            defmt::error!("failed to serialize message");
-                            return;
-                        }
-                        Ok(end_of_buf) => end_of_buf,
-                    };
+                let msg: shared::Message = shared::Message {
+                    vbat,
+                    data: "Hello, World!"
+                };
+
+                let filled: &mut [u8] = match postcard::to_slice(&msg, remainder) {
+                    Ok(f) => f,
+                    Err(_) => {
+                        defmt::error!("failed to serialize message");
+                        return;
+                    }
+                };
 
                 // fill IV
                 iv[0] = unwrap!(rng.try_u32());
@@ -448,11 +441,11 @@ mod app {
                     &PRIV_KEY,
                     iv,
                     &[],
-                    &mut remainder[..end_of_buf],
+                    filled,
                     tag
                 ));
 
-                let end_of_buf: usize = end_of_buf +  size_of::<[u32; 3]>() + size_of::<[u32; 4]>();
+                let end_of_buf: usize = filled.len() + size_of::<[u32; 3]>() + size_of::<[u32; 4]>();
 
                 unwrap!(setup_radio_with_payload_len(sg, end_of_buf as u8));
                 unwrap!(sg.write_buffer(0, &bytemuck::bytes_of::<[u32; 64]>(buf)[..end_of_buf]));

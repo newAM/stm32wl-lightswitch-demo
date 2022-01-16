@@ -233,22 +233,16 @@ mod app {
 
                 led.toggle();
 
-                let mut decoder = minicbor::Decoder::new(remainder);
-
-                match decoder.u16() {
+                let msg: shared::Message = match postcard::from_bytes(remainder) {
+                    Ok(msg) => msg,
                     Err(_) => {
-                        defmt::warn!("failed to decode vbat");
+                        defmt::warn!("failed to deserialize message");
                         return;
                     }
-                    Ok(vbat) => defmt::info!("vbat: {}", vbat),
                 };
 
-                match decoder.str() {
-                    Err(_) => {
-                        defmt::warn!("failed to decode data");
-                    }
-                    Ok(data) => defmt::info!("data: {}", data),
-                };
+                defmt::info!("vbat: {}", msg.vbat);
+                defmt::info!("data: {}", msg.data);
             } else {
                 defmt::warn!("Message with unknown length ignored: {}", len);
                 rfs.set_rx();

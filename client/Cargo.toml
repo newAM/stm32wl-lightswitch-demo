@@ -10,8 +10,8 @@ bytemuck = "1"
 cortex-m-rtic = "1.0.0"
 defmt = "0.3"
 defmt-rtt = "0.3"
-minicbor = "0.12"
 panic-probe = { version = "0.3", features = ["print-defmt" ] }
+postcard = "0.7"
 shared.path = "../shared"
 
 [dependencies.nucleo-wl55jc-bsp]
