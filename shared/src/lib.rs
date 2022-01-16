@@ -89,3 +89,9 @@ pub fn setup_radio_with_payload_len(
 pub fn setup_radio(sg: &mut SubGhz<Dma1Ch1, Dma1Ch2>) -> Result<(), subghz::Error> {
     setup_radio_with_payload_len(sg, u8::MAX)
 }
+
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
+pub struct Message<'a> {
+    pub vbat: u16,
+    pub data: &'a str,
+}
