@@ -61,10 +61,79 @@ Implementing a custom protocol is typically a bad idea when security is a
 requirement.
 
 The code **is not** secure as-is:
+
 1. The server time is not accurate, leading to nonce reuse.
 2. The time-synchronization nonce is reset when the server is reset,
    leading to nonce reuse.
 3. The private key is comitted to a public repository.
+
+A better nonce would be a non-volatile value stored in flash, but I do not want
+to wear out your flash for a demonstration.
+
+```rs
+/// Non-volatile u64 stored in the last page of flash
+///
+/// * Service lifetime is 30 years (flash data detention)
+/// * Page endurance is 10k cycles
+/// * Page size is 2048 bytes
+///
+/// service_days = 30 * 365 = 10950
+/// u64_writes = 10k * (2048 / 8) = 2_560_000
+/// writes_per_day = u64_writes / service_days = 233.79
+///
+/// You can use more pages or an external EEPROM if you need more writes/day.
+pub struct NonVolatileU64 {
+    _priv: (),
+}
+
+impl NonVolatileU64 {
+    const U64_PER_PAGE: usize = Page::SIZE / size_of::<u64>();
+    const U64_PER_PAGE_ISIZE: isize = Self::U64_PER_PAGE as isize;
+    const PAGE: Page = unsafe { Page::from_index_unchecked(127) };
+    const FIRST: *const u64 = Self::PAGE.addr() as *const u64;
+    const LAST: *const u64 = (Self::PAGE.addr() + Page::SIZE - size_of::<u64>()) as *const u64;
+
+    #[inline]
+    pub fn fetch_increment(flash: &mut pac::FLASH) -> Result<u64, flash::Error> {
+        if let Some((val, offset)) = Self::fetch() {
+            let mut flash: Flash = Flash::unlock(flash);
+
+            let next: *mut u64 = if offset == 0 {
+                unsafe { flash.page_erase(Self::PAGE)? };
+                Self::FIRST as *mut u64
+            } else {
+                unsafe { Self::LAST.offset(-offset + 1) as *mut u64 }
+            };
+
+            // in theory this should be a checked add, panicing at overflow
+            // but the flash page will die before u64 wraps
+            let next_val: u64 = val.wrapping_add(1);
+
+            unsafe { flash.standard_program(&next_val, next)? };
+
+            Ok(next_val)
+        } else {
+            let mut flash: Flash = Flash::unlock(flash);
+            unsafe {
+                flash.page_erase(Self::PAGE)?;
+                flash.standard_program(&0, Self::FIRST as *mut u64)?
+            };
+            Ok(0)
+        }
+    }
+
+    fn fetch() -> Option<(u64, isize)> {
+        for offset in 0..Self::U64_PER_PAGE_ISIZE {
+            let ptr: *const u64 = unsafe { Self::LAST.offset(-offset) };
+            let value: u64 = unsafe { ptr.read_volatile() };
+            if value != u64::MAX {
+                return Some((value, offset));
+            }
+        }
+        None
+    }
+}
+```
 
 ## Limitations
 
