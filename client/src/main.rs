@@ -205,7 +205,7 @@ mod app {
         let adc: Adc = Adc::new(dp.ADC, adc::Clk::RccSysClk, &mut dp.RCC);
 
         let aes: Aes = Aes::new(dp.AES, &mut dp.RCC);
-        let rng: Rng = Rng::new(dp.RNG, rng::Clk::MSI, &mut dp.RCC);
+        let rng: Rng = Rng::new(dp.RNG, rng::Clk::Msi, &mut dp.RCC);
 
         let delay: Delay = Delay::new(cp.SYST, rcc::cpu1_systick_hz(&dp.RCC, SystClkSource::Core));
         let rfs: RfSwitch = RfSwitch::new(gpioc.c3, gpioc.c4, gpioc.c5, cs);
