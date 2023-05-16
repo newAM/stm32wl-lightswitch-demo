@@ -13,8 +13,7 @@ authenticating the request.
 
 1. [rustup](https://rustup.rs/)
 2. Two [NUCLEO-WL55JC2]
-3. [probe-run] with patches for the STM32WL
-   `cargo install --git https://github.com/newAM/probe-run.git`
+3. [probe-run] >= 0.3.1
 
 ## Usage
 
