@@ -89,8 +89,8 @@ mod app {
 
         // this is a security problem that needs to be fixed
         // the server should have the time set by an up-to-date source.
-        let date: NaiveDate = NaiveDate::from_ymd(2021, 9, 11);
-        let date_time: NaiveDateTime = date.and_hms(10, 47, 25);
+        let date: NaiveDate = unwrap!(NaiveDate::from_ymd_opt(2021, 9, 11));
+        let date_time: NaiveDateTime = unwrap!(date.and_hms_opt(10, 47, 25));
         rtc.set_date_time(date_time);
 
         unwrap!(setup_radio(&mut sg));
@@ -171,7 +171,7 @@ mod app {
                     BASE_PACKET_PARAMS.set_payload_len(PKT_LEN);
                 unwrap!(sg.set_packet_params(&PACKET_PARAMS));
 
-                let millis: i64 = unwrap!(rtc.date_time()).timestamp_millis();
+                let millis: i64 = unwrap!(rtc.date_time()).and_utc().timestamp_millis();
                 buf[0] = *time_sync_cnt;
                 buf[1] = (millis >> 32) as u32;
                 buf[2] = millis as u32;
@@ -214,7 +214,7 @@ mod app {
                 }[..(len as usize) - IV_AND_TAG_LEN];
 
                 // verify message was sent recently
-                let now: i64 = unwrap!(rtc.date_time()).timestamp_millis();
+                let now: i64 = unwrap!(rtc.date_time()).and_utc().timestamp_millis();
                 let msg_millis: i64 = i64::from(iv[1]) << 32 | i64::from(iv[2]);
                 let elapsed: i64 = now - msg_millis;
                 defmt::info!("client-server time Δ: {} ms", elapsed);
