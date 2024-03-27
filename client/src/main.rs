@@ -15,7 +15,7 @@ use defmt_rtt as _; // global logger
 use hal::{
     adc::{self, Adc},
     aes::Aes,
-    chrono::{NaiveDate, NaiveDateTime},
+    chrono::{DateTime, NaiveDate, NaiveDateTime, Utc},
     cortex_m::{delay::Delay, peripheral::syst::SystClkSource},
     dma::{AllDma, Dma1Ch1, Dma1Ch2},
     embedded_hal::digital::v2::ToggleableOutputPin,
@@ -112,9 +112,8 @@ fn locked_radio(
                 let timestamp_millis: i64 = i64::from(data[0]) << 32 | i64::from(data[1]);
                 let secs: i64 = timestamp_millis / 1000;
                 let nsec: u32 = unwrap!(u32::try_from(timestamp_millis % 1000).ok()) * 1_000_000;
-                let date_time: NaiveDateTime =
-                    unwrap!(NaiveDateTime::from_timestamp_opt(secs, nsec));
-                rtc.set_date_time(date_time);
+                let date_time: DateTime<Utc> = unwrap!(DateTime::from_timestamp(secs, nsec));
+                rtc.set_date_time(date_time.naive_utc());
                 defmt::info!("set date time to {}", defmt::Display2Format(&date_time));
 
                 unwrap!(unsafe { sg.set_sleep(SLEEP_CFG) });
@@ -311,8 +310,8 @@ mod app {
         // check RTC is setup and we have not exhausted the rate limit
         ctx.shared.rtc.lock(|rtc| match rtc.date_time() {
             Some(date_time) => {
-                let min_date: NaiveDate = NaiveDate::from_ymd(2021, 9, 11);
-                let min_date_time: NaiveDateTime = min_date.and_hms(0, 0, 0);
+                let min_date: NaiveDate = unwrap!(NaiveDate::from_ymd_opt(2021, 9, 11));
+                let min_date_time: NaiveDateTime = unwrap!(min_date.and_hms_opt(0, 0, 0));
                 if date_time < min_date_time {
                     defmt::warn!(
                         "ignoring PB3 IRQ, RTC date is in the past {}",
@@ -320,7 +319,7 @@ mod app {
                     );
                 }
 
-                let timestamp: i64 = date_time.timestamp_millis();
+                let timestamp: i64 = date_time.and_utc().timestamp_millis();
                 if prev.saturating_add(300) > timestamp {
                     defmt::warn!("ignoring PB3 IRQ, rate limited to 300 ms");
                 } else {
@@ -433,7 +432,7 @@ mod app {
 
                 // fill IV
                 iv[0] = unwrap!(rng.try_u32());
-                let millis: i64 = unwrap!(rtc.date_time()).timestamp_millis();
+                let millis: i64 = unwrap!(rtc.date_time()).and_utc().timestamp_millis();
                 iv[1] = (millis >> 32) as u32;
                 iv[2] = millis as u32;
 
