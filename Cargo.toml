@@ -1,5 +1,6 @@
 [workspace]
 members = ["client", "server", "shared"]
+resolver = "2"
 
 [profile.dev]
 codegen-units = 1
