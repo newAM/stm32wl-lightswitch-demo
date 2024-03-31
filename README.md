@@ -13,27 +13,27 @@ authenticating the request.
 
 1. [rustup](https://rustup.rs/)
 2. Two [NUCLEO-WL55JC2]
-3. [probe-run] >= 0.3.1
+3. [probe-rs]
 
 ## Usage
 
 Run the `server` package and `client` package on two separate targets at the
-same time using `probe-run`.
+same time using `probe-rs`.
 
 ```console
-$ probe-run --list-probes
-The following devices were found:
+$ probe-rs list
+The following debug probes were found:
 [0]: STLink V3 (VID: 0483, PID: 374e, Serial: 001600345553500A20393256, StLink)
 [1]: STLink V3 (VID: 0483, PID: 374e, Serial: 001D00145553500A20393256, StLink)
-$ DEFMT_LOG=trace cargo run -p server -- --probe 001600345553500A20393256
-$ DEFMT_LOG=trace cargo run -p client -- --probe 001D00145553500A20393256
+$ DEFMT_LOG=trace cargo run -p server -- --probe 0483:374e:001600345553500A20393256
+$ DEFMT_LOG=trace cargo run -p client -- --probe 0483:374e:001D00145553500A20393256
 ```
 
 If you want to be fancy, I use tmux to launch these at the same time in one
 terminal session.
 
 ```bash
-tmux new-session "DEFMT_LOG=trace cargo run -p server -- --probe 001600345553500A20393256" \; split-window "DEFMT_LOG=trace cargo run -p client -- --probe 001D00145553500A20393256" \; setw remain-on-exit on \;
+tmux new-session "DEFMT_LOG=trace cargo run -p server -- --probe 0483:374e:001600345553500A20393256" \; split-window "DEFMT_LOG=trace cargo run -p client -- --probe 0483:374e:001D00145553500A20393256" \; setw remain-on-exit on \;
 ```
 
 ## Features demonstrated
@@ -148,5 +148,5 @@ Notes on what needs to be improved to extend this for a real-world application:
 
 [stm32wl-hal]: https://github.com/newAM/stm32wl-hal
 [NUCLEO-WL55JC2]: https://www.st.com/en/evaluation-tools/nucleo-wl55jc.html#sample-buy
-[probe-run]: https://github.com/knurling-rs/probe-run
+[probe-rs]: https://github.com/probe-rs/probe-rs
 [rustup]: https://rustup.rs/
